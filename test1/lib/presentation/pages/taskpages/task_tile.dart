@@ -29,7 +29,10 @@ class TaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final priorityColor = _getPriorityColor(task.priority);
+
     final formattedDate = task.dueDate != null
         ? "${task.dueDate!.day}/${task.dueDate!.month}/${task.dueDate!.year}"
         : null;
@@ -40,15 +43,10 @@ class TaskTile extends StatelessWidget {
 
     final Color statusColor = task.isCompleted
         ? AppColors.success
-        : (task.priority == "High" ? Colors.amber.shade800 : Colors.orange);
+        : (task.priority == "High" ? AppColors.accent : Colors.orange);
 
     return Card(
-      elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.border.withValues(alpha: 0.6)),
-      ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         title: Text(
@@ -56,7 +54,9 @@ class TaskTile extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 16,
-            color: task.isCompleted ? AppColors.textMuted : AppColors.textPrimary,
+            color: task.isCompleted
+                ? colorScheme.onSurfaceVariant.withValues(alpha: 0.6)
+                : colorScheme.onSurface,
             decoration: task.isCompleted ? TextDecoration.lineThrough : null,
           ),
         ),
@@ -70,7 +70,9 @@ class TaskTile extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: task.isCompleted ? AppColors.textMuted : AppColors.textSecondary,
+                  color: task.isCompleted
+                      ? colorScheme.onSurfaceVariant.withValues(alpha: 0.6)
+                      : colorScheme.onSurfaceVariant,
                   fontSize: 13,
                   decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                 ),
@@ -119,15 +121,15 @@ class TaskTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: colorScheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     task.category,
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: colorScheme.primary,
                       fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -137,18 +139,22 @@ class TaskTile extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.divider,
+                      color: colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.calendar_today, size: 10, color: AppColors.textSecondary),
+                        Icon(
+                          Icons.calendar_today,
+                          size: 10,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           formattedDate,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
                             fontSize: 11,
                           ),
                         ),
@@ -163,12 +169,12 @@ class TaskTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
+              icon: Icon(Icons.edit_outlined, color: colorScheme.primary),
               onPressed: onEdit,
               tooltip: 'Edit Task',
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+              icon: Icon(Icons.delete_outline, color: colorScheme.error),
               onPressed: onDelete,
               tooltip: 'Delete Task',
             ),

@@ -4,16 +4,14 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 import 'package:test1/presentation/bloc/authbloc/auth_bloc.dart';
 import 'package:test1/presentation/bloc/authbloc/auth_event.dart';
 import 'package:test1/presentation/bloc/taskbloc/task_bloc.dart';
 import 'package:test1/presentation/bloc/taskbloc/task_event.dart';
 import 'package:test1/presentation/bloc/taskbloc/task_state.dart';
+import 'package:test1/presentation/bloc/themebloc/theme_cubit.dart';
 import 'package:test1/presentation/pages/taskpages/addtaskpage.dart';
 import 'package:test1/presentation/pages/taskpages/task_tile.dart';
-
-import 'package:test1/presentation/provider/themeprovider.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -32,18 +30,22 @@ class _TaskListScreenState extends State<TaskListScreen> {
   void initState() {
     super.initState();
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-    print("uid get from home is $uid");
     if (uid.isNotEmpty) {
       context.read<TaskBloc>().add(FetchTasksEvent(userId: uid, refresh: true));
     }
 
     // Auto-sync offline tasks when internet connection is restored
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
-      final isOnline = !results.contains(ConnectivityResult.none) && results.isNotEmpty;
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      results,
+    ) {
+      final isOnline =
+          !results.contains(ConnectivityResult.none) && results.isNotEmpty;
       if (isOnline) {
         final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
         if (currentUid.isNotEmpty) {
-          context.read<TaskBloc>().add(FetchTasksEvent(userId: currentUid, refresh: true));
+          context.read<TaskBloc>().add(
+            FetchTasksEvent(userId: currentUid, refresh: true),
+          );
         }
       }
     });
@@ -80,46 +82,28 @@ class _TaskListScreenState extends State<TaskListScreen> {
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("My tasks"),
         actions: [
-          Consumer<ThemeProvider>(
-  builder: (context, themeProvider, child) {
-    return IconButton(
-      icon: Icon(
-        themeProvider.themeMode == ThemeMode.dark
-            ? Icons.light_mode
-            : Icons.dark_mode,
-      ),
-      tooltip: "Toggle Theme",
-      onPressed: () {
-        themeProvider.toggleTheme(uid);
-      },
-    );
-  },
-),
-          
-          // BlocBuilder<ThemeCubit, ThemeMode>(
-          //   builder: (context, themeMode) {
-          //     return IconButton(
-          //       icon: Icon(
-          //         themeMode == ThemeMode.dark
-          //             ? Icons.light_mode
-          //             : Icons.dark_mode,
-          //       ),
-          //       tooltip: "Toggle Theme",
-          //       onPressed: () {
-          //         final themeProvider = context.read<ThemeProvider>();
-          //         themeProvider.toggleTheme(uid);
-          //         // context.read<ThemeCubit>().toggleTheme(uid);
-          //       },
-          //     );
-          //   },
-          // ),
-         
-         
+          BlocBuilder<ThemeCubit, ThemeMode>(
+            builder: (context, themeMode) {
+              return IconButton(
+                icon: Icon(
+                  themeMode == ThemeMode.dark
+                      ? Icons.light_mode
+                      : Icons.dark_mode,
+                ),
+                tooltip: "Toggle Theme",
+                onPressed: () {
+                  context.read<ThemeCubit>().toggleTheme(uid);
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: "Logout",
@@ -138,7 +122,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
       ),
       body: Column(
         children: [
-          // Offline banner — reuses your existing connectivity_plus stream
+          // Offline banner
           StreamBuilder<List<ConnectivityResult>>(
             stream: Connectivity().onConnectivityChanged,
             builder: (context, snapshot) {
@@ -150,20 +134,34 @@ class _TaskListScreenState extends State<TaskListScreen> {
               if (!offline) return const SizedBox.shrink();
               return Container(
                 width: double.infinity,
-                color: Colors.orange.shade100,
+                color: Colors.amber.shade700.withValues(alpha: 0.2),
                 padding: const EdgeInsets.symmetric(
                   vertical: 8,
                   horizontal: 12,
                 ),
-                child: const Text(
-                  "You're offline. Showing loaded tasks.",
-                  style: TextStyle(fontSize: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.wifi_off_rounded,
+                      size: 16,
+                      color: Colors.amber.shade700,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "You're offline.",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
           ),
 
-          // Search
+          // Search Box
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextField(
@@ -172,7 +170,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search),
                 hintText: "Search by title",
-                border: OutlineInputBorder(),
               ),
             ),
           ),
@@ -181,37 +178,87 @@ class _TaskListScreenState extends State<TaskListScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: BlocBuilder<TaskBloc, TaskState>(
-              buildWhen: (p, c) => p.filter != c.filter || p.sortBy != c.sortBy,
+              // buildWhen: (p, c) => p.filter != c.filter || p.sortBy != c.sortBy,
               builder: (context, state) {
                 return Row(
                   children: [
-                    ChoiceChip(
-                      label: const Text("All"),
-                      selected: state.filter == TaskFilter.all,
-                      onSelected: (_) => context.read<TaskBloc>().add(
-                        const ChangeFilterEvent(TaskFilter.all),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            ChoiceChip(
+                              label: Text(
+                                "All",
+                                style: TextStyle(
+                                  color: state.filter == TaskFilter.all
+                                      ? colorScheme.onPrimary
+                                      : colorScheme.onSurface,
+                                ),
+                              ),
+                              selected: state.filter == TaskFilter.all,
+                              onSelected: (_) => context.read<TaskBloc>().add(
+                                const ChangeFilterEvent(TaskFilter.all),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ChoiceChip(
+                              label: Text(
+                                "Pending",
+                                style: TextStyle(
+                                  color: state.filter == TaskFilter.pending
+                                      ? colorScheme.onPrimary
+                                      : colorScheme.onSurface,
+                                ),
+                              ),
+                              selected: state.filter == TaskFilter.pending,
+                              onSelected: (_) => context.read<TaskBloc>().add(
+                                const ChangeFilterEvent(TaskFilter.pending),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ChoiceChip(
+                              label: Text(
+                                "Completed",
+                                style: TextStyle(
+                                  color: state.filter == TaskFilter.completed
+                                      ? colorScheme.onPrimary
+                                      : colorScheme.onSurface,
+                                ),
+                              ),
+                              selected: state.filter == TaskFilter.completed,
+                              onSelected: (_) => context.read<TaskBloc>().add(
+                                const ChangeFilterEvent(TaskFilter.completed),
+                              ),
+                            ),
+                             const SizedBox(width: 8),
+                             ChoiceChip(
+                              label: Text(
+                                "Started",
+                                style: TextStyle(
+                                  color: state.filter == TaskFilter.started
+                                      ? colorScheme.onPrimary
+                                      : colorScheme.onSurface,
+                                ),
+                              ),
+                              selected: state.filter == TaskFilter.started,
+                              onSelected: (_) => context.read<TaskBloc>().add(
+                                const ChangeFilterEvent(TaskFilter.started),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text("Pending"),
-                      selected: state.filter == TaskFilter.pending,
-                      onSelected: (_) => context.read<TaskBloc>().add(
-                        const ChangeFilterEvent(TaskFilter.pending),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text("Completed"),
-                      selected: state.filter == TaskFilter.completed,
-                      onSelected: (_) => context.read<TaskBloc>().add(
-                        const ChangeFilterEvent(TaskFilter.completed),
-                      ),
-                    ),
-                    const Spacer(),
                     DropdownButton<SortBy>(
                       value: state.sortBy,
+                      dropdownColor: colorScheme.surface,
                       underline: const SizedBox(),
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 14,
+                      ),
                       items: const [
                         DropdownMenuItem(
                           value: SortBy.dueDate,
@@ -244,12 +291,18 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 }
                 if (state.status == TaskStatus.error && state.tasks.isEmpty) {
                   return Center(
-                    child: Text(state.error ?? "Something went wrong"),
+                    child: Text(
+                      state.error ?? "Something went wrong",
+                      style: TextStyle(color: colorScheme.error),
+                    ),
                   );
                 }
                 if (state.visibleTasks.isEmpty) {
-                  return const Center(
-                    child: Text("No tasks match your filters"),
+                  return Center(
+                    child: Text(
+                      "No tasks match your filters",
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
                   );
                 }
 
@@ -259,8 +312,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                   ),
                   child: ListView.builder(
                     controller: _scrollController,
-                    itemCount:
-                        state.visibleTasks.length + (state.hasMore ? 1 : 0),
+                    itemCount:state.visibleTasks.length + (state.hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index >= state.visibleTasks.length) {
                         return const Padding(

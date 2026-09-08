@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 
 import 'package:test1/core/theme/app_theme.dart';
 import 'package:test1/core/widgets/error_view.dart';
@@ -19,9 +18,9 @@ import 'package:test1/firebase_options.dart';
 import 'package:test1/presentation/bloc/authbloc/auth_bloc.dart';
 import 'package:test1/presentation/bloc/authbloc/auth_state.dart';
 import 'package:test1/presentation/bloc/taskbloc/task_bloc.dart';
+import 'package:test1/presentation/bloc/themebloc/theme_cubit.dart';
 import 'package:test1/presentation/pages/auth/login_screen.dart';
 import 'package:test1/presentation/pages/taskpages/tasklistpage.dart';
-import 'package:test1/presentation/provider/themeprovider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +30,9 @@ void main() async {
   // Initialize Hive database for local caching & offline sync
   await Hive.initFlutter();
   final tasksBox = await Hive.openBox(TaskLocalDataSourceImpl.boxName);
-  final pendingTasksBox = await Hive.openBox(TaskLocalDataSourceImpl.pendingBoxName);
+  final pendingTasksBox = await Hive.openBox(
+    TaskLocalDataSourceImpl.pendingBoxName,
+  );
 
   final httpClient = http.Client();
 
@@ -62,37 +63,30 @@ void main() async {
   final deleteTaskUseCase = DeleteTaskUseCase(taskRepository);
 
   runApp(
-    MultiProvider(
+    MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => ThemeProvider(authRepository: authRepository),
+        BlocProvider<ThemeCubit>(
+          create: (_) => ThemeCubit(authRepository: authRepository),
+        ),
+        BlocProvider<AuthBloc>(
+          create: (_) => AuthBloc(
+            signInUseCase: signInUseCase,
+            signUpUseCase: signUpUseCase,
+            signOutUseCase: signOutUseCase,
+            getCurrentUserUseCase: getCurrentUserUseCase,
+          ),
+        ),
+        BlocProvider<TaskBloc>(
+          create: (_) => TaskBloc(
+            getTasksUseCase: getTasksUseCase,
+            addTaskUseCase: addTaskUseCase,
+            updateTaskUseCase: updateTaskUseCase,
+            toggleTaskStatusUseCase: toggleTaskStatusUseCase,
+            deleteTaskUseCase: deleteTaskUseCase,
+          ),
         ),
       ],
-      child: MultiBlocProvider(
-        providers: [
-          // BlocProvider<ThemeCubit>(
-          //   create: (_) => ThemeCubit(authRepository: authRepository),
-          // ),
-          BlocProvider<AuthBloc>(
-            create: (_) => AuthBloc(
-              signInUseCase: signInUseCase,
-              signUpUseCase: signUpUseCase,
-              signOutUseCase: signOutUseCase,
-              getCurrentUserUseCase: getCurrentUserUseCase,
-            ),
-          ),
-          BlocProvider<TaskBloc>(
-            create: (_) => TaskBloc(
-              getTasksUseCase: getTasksUseCase,
-              addTaskUseCase: addTaskUseCase,
-              updateTaskUseCase: updateTaskUseCase,
-              toggleTaskStatusUseCase: toggleTaskStatusUseCase,
-              deleteTaskUseCase: deleteTaskUseCase,
-            ),
-          ),
-        ],
-        child: const MyApp(),
-      ),
+      child: const MyApp(),
     ),
   );
 }
@@ -102,11 +96,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(builder: (_,provider,_){
-      final themeMode=provider.themeMode;
-      
-    
-    return MaterialApp(
+    return BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, themeMode) {
+        return MaterialApp(
           title: 'Task Manager',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
@@ -116,19 +108,6 @@ class MyApp extends StatelessWidget {
         );
       },
     );
-    
-    // BlocBuilder<ThemeCubit, ThemeMode>(
-    //   builder: (context, themeMode) {
-    //     return MaterialApp(
-    //       title: 'Task Manager',
-    //       debugShowCheckedModeBanner: false,
-    //       theme: AppTheme.lightTheme,
-    //       darkTheme: AppTheme.darkTheme,
-    //       themeMode: themeMode,
-    //       home: const AuthGate(),
-    //     );
-    //   },
-    // );
   }
 }
 
@@ -146,7 +125,7 @@ class AuthGate extends StatelessWidget {
         }
 
         if (state is AuthenticatedState) {
-          context.read<ThemeProvider>().initThemeFromUser(state.user.themeMode);
+          context.read<ThemeCubit>().initThemeFromUser(state.user.themeMode);
           return const TaskListScreen();
         }
 

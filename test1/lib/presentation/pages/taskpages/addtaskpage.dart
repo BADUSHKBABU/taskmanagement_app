@@ -38,10 +38,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       if (t.isCompleted) {
         _status = "Completed";
       } else if (t.priority == "High") {
-        _status = "Starred";
+        _status = "Started";
       } else {
         _status = "Pending";
       }
+      
     } else {
       _status = "Pending";
     }
@@ -59,6 +60,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -66,6 +69,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         actions: [
           TextButton(
             onPressed: () => _onSave(uid),
+            style: TextButton.styleFrom(
+              foregroundColor: colorScheme.primary,
+              textStyle: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             child: const Text("Save"),
           ),
         ],
@@ -98,15 +105,17 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _status,
+                dropdownColor: colorScheme.surface,
+                style: TextStyle(color: colorScheme.onSurface),
                 decoration: const InputDecoration(labelText: "Status"),
-                items: ["Pending", "Completed", "Starred"]
+                items: ["Pending", "Completed", "Started"]
                     .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                     .toList(),
                 onChanged: (v) {
                   if (v != null) {
                     setState(() {
                       _status = v;
-                      if (v == "Starred") {
+                      if (v == "Started") {
                         _priority = "High";
                       }
                     });
@@ -119,6 +128,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: _priority,
+                      dropdownColor: colorScheme.surface,
+                      style: TextStyle(color: colorScheme.onSurface),
                       decoration: const InputDecoration(labelText: "Priority"),
                       items: ["High", "Medium", "Low"]
                           .map((p) => DropdownMenuItem(value: p, child: Text(p)))
@@ -139,6 +150,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: _category,
+                      dropdownColor: colorScheme.surface,
+                      style: TextStyle(color: colorScheme.onSurface),
                       decoration: const InputDecoration(
                         labelText: "Category",
                       ),
@@ -150,14 +163,22 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.calendar_today_outlined),
-                title: Text(_dueDate == null
-                    ? "Select a date"
-                    : "${_dueDate!.toLocal()}".split(' ')[0]),
-                onTap: _pickDate,
+              const SizedBox(height: 16),
+              Card(
+                child: ListTile(
+                  leading: Icon(Icons.calendar_today_outlined, color: colorScheme.primary),
+                  title: Text(
+                    _dueDate == null
+                        ? "Select Due Date"
+                        : "Due: ${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year}",
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _pickDate,
+                ),
               ),
             ],
           ),

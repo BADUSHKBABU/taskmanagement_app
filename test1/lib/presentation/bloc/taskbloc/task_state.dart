@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:test1/domain/entity/taskentity.dart';
 
 enum TaskStatus { initial, loading, success, error }
-enum TaskFilter { all, pending, completed }
+
+enum TaskFilter { all, pending, completed, started }
+
 enum SortBy { dueDate, priority, createdDate }
 
 @immutable
@@ -60,9 +62,12 @@ class TaskState {
     if (searchQuery.isNotEmpty) {
       final q = searchQuery.toLowerCase();
       result = result
-          .where((t) =>
-              t.title.toLowerCase().contains(q) ||
-              (t.description != null && t.description!.toLowerCase().contains(q)))
+          .where(
+            (t) =>
+                t.title.toLowerCase().contains(q) ||
+                (t.description != null &&
+                    t.description!.toLowerCase().contains(q)),
+          )
           .toList();
     }
 
@@ -71,6 +76,8 @@ class TaskState {
       result = result.where((t) => !t.isCompleted).toList();
     } else if (filter == TaskFilter.completed) {
       result = result.where((t) => t.isCompleted).toList();
+    } else if (filter == TaskFilter.started) {
+      result = result.where((t) => !t.isCompleted && t.priority == "High").toList();
     }
 
     // Sort
@@ -114,14 +121,14 @@ class TaskState {
 
   @override
   int get hashCode => Object.hash(
-        status,
-        Object.hashAll(tasks),
-        filter,
-        sortBy,
-        searchQuery,
-        hasMore,
-        skip,
-        limit,
-        error,
-      );
+    status,
+    Object.hashAll(tasks),
+    filter,
+    sortBy,
+    searchQuery,
+    hasMore,
+    skip,
+    limit,
+    error,
+  );
 }

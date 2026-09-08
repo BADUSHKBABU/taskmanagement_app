@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:test1/core/constants/app_colors.dart';
-
 class ErrorView extends StatelessWidget {
   final String errorMessage;
   final VoidCallback onRetry;
@@ -14,6 +12,9 @@ class ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -23,30 +24,30 @@ class ErrorView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.dangerLight,
+                color: colorScheme.error.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.error_outline_rounded,
                 size: 56,
-                color: AppColors.danger,
+                color: colorScheme.error,
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Something went wrong',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               errorMessage,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textSecondary,
+                color: colorScheme.onSurfaceVariant,
                 height: 1.4,
               ),
               textAlign: TextAlign.center,
@@ -57,8 +58,8 @@ class ErrorView extends StatelessWidget {
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Try Again'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
+                foregroundColor: colorScheme.primary,
+                side: BorderSide(color: colorScheme.primary),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

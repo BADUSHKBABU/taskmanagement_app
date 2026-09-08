@@ -5,7 +5,6 @@ import 'package:test1/presentation/bloc/authbloc/auth_event.dart';
 import 'package:test1/presentation/bloc/authbloc/auth_state.dart';
 import 'package:test1/presentation/pages/auth/register_screen.dart';
 
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -40,8 +39,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      // backgroundColor: AppColors.background,
       body: SafeArea(
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
@@ -49,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  // backgroundColor: AppColors.danger,
+                  backgroundColor: colorScheme.error,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -67,39 +68,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Header Icon & Title
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          // color: AppColors.primary,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              // color: AppColors.primary.withValues(alpha: 0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.task_alt_rounded,
-                          size: 38,
-                          color: Colors.white,
-                        ),
-                      ),
+                      // Header Title
                       const SizedBox(height: 24),
-                      const Text(
-                        'Welcome Back',
+                      Text(
+                        'LucidPlus -task managmnt App',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          // color: AppColors.textPrimary,
+                          color: colorScheme.onSurface,
                           letterSpacing: -0.5,
                         ),
                         textAlign: TextAlign.center,
                       ),
-
                       const SizedBox(height: 36),
 
                       // Email Field
@@ -107,33 +87,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         enabled: !isLoading,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Email Address',
-                          prefixIcon: const Icon(
-                            Icons.email_outlined,
-                            // color: AppColors.textMuted,
-                          ),
-                          filled: true,
-                          // fillColor: AppColors.surface,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              // color: AppColors.border,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              // color: AppColors.border,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              // color: AppColors.primary,
-                              width: 2,
-                            ),
-                          ),
+                          prefixIcon: Icon(Icons.email_outlined),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -156,43 +112,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         enabled: !isLoading,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          prefixIcon: const Icon(
-                            Icons.lock_outline_rounded,
-                            // color: AppColors.textMuted,
-                          ),
+                          prefixIcon: const Icon(Icons.lock_outline_rounded),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
-                              // color: AppColors.textMuted,
                             ),
                             onPressed: () {
                               setState(() {
                                 _obscurePassword = !_obscurePassword;
                               });
                             },
-                          ),
-                          filled: true,
-                          // fillColor: AppColors.surface,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              // color: AppColors.border,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              // color: AppColors.border,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              // color: AppColors.primary,
-                              width: 2,
-                            ),
                           ),
                         ),
                         validator: (value) {
@@ -210,22 +141,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Login Button
                       ElevatedButton(
                         onPressed: isLoading ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          // backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 2,
-                        ),
                         child: isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 22,
                                 height: 22,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
-                                  color: Colors.white,
+                                  color: colorScheme.onPrimary,
                                 ),
                               )
                             : const Text(
@@ -242,11 +164,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             "Don't have an account? ",
                             style: TextStyle(
-                              // color: AppColors.textSecondary
-                              ),
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
                           GestureDetector(
                             onTap: isLoading
@@ -261,10 +183,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     );
                                   },
-                            child: const Text(
+                            child: Text(
                               'Sign Up',
                               style: TextStyle(
-                                // color: AppColors.primary,
+                                color: colorScheme.primary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
